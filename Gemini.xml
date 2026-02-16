@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Suite Title="Gemini" Id="Gemini" Category="AI" RequireVersion="9.7.1" SourceUrl="https://github.com/nielsbosma/SeoTools-for-Excel-Connectors/blob/master/Gemini.xml" HelpUrl="http://seotoolsforexcel.com/gemini/" HelpText="Documentation">
+
+  <Author Name="Victor Sandberg" Url="http://community.seotoolsforexcel.com/users/diskborste/activity" />
+
+  <Settings HelpText="What's this?" HelpUrl="https://seotoolsforexcel.com/gemini/">
+    <Text Id="ApiKey" Title="API Key" Required="true"/>
+  </Settings>
+
+  <Resources>
+    <Resource Id="HttpProps">
+      <Cache>false</Cache>
+      <CacheKeyComponents>Url;RequestBody</CacheKeyComponents>
+      <RequestContentType>application/json</RequestContentType>
+      <RequestHeaders>
+        <Header Name='x-goog-api-key'>@(Model.ApiKey)</Header>
+      </RequestHeaders>
+    </Resource>
+    <Resource Id="Fail">
+      <Fail>
+        <JsonPath Expr="$.error.message"/>
+      </Fail>
+    </Resource>
+  </Resources>
+
+  <RestConnector Id="Gemini" Title="Gemini" HelpUrl="https://ai.google.dev/api/generate-content#method:-models.generatecontent">
+    <Parameters>
+      <Text Id="Content" Debug.DefaultValue="mimetype of filetype bmp" Required="true" Multiline="true"/>
+      <Select Id="Model" Title="Model" DefaultValue="gemini-3-flash-preview">
+        <DataSource>
+          <Item Id="gemini-3-flash-preview"/>
+          <Item Id="gemini-3-pro-preview"/>
+        </DataSource>
+      </Select>
+      <Select Id="ThinkingLevel" Title="Thinking Level" DefaultValue="THINKING_LEVEL_UNSPECIFIED">
+        <DataSource>
+          <Item Id="THINKING_LEVEL_UNSPECIFIED" Title="Unspecified"/>
+          <Item Id="MINIMAL" Title="Minimal"/>
+          <Item Id="LOW" Title="Low"/>
+          <Item Id="MEDIUM" Title="Medium"/>
+          <Item Id="HIGH" Title="High"/>
+        </DataSource>
+      </Select>
+      <Text Id="Temperature" DefaultValue="1"/>
+      <Text Id="TopP" DefaultValue="0.5"/>
+			<Checkbox Id="UseGoogleSearch" Title="Use Google Search"/>
+			<Checkbox Id="UseWebContext" Title="Use Web Context"/>
+      <Number Id="Delay" Title="Delay Between Requests (ms)" DefaultValue="1000" Minimum="0" Maximum="1000000" Format="N1" HelpText="The delay between requests in milliseconds. This is useful when you want to avoid hitting the API rate limit." HelpUrl="https://help.openai.com/en/articles/5955598-is-api-usage-subject-to-any-rate-limits"/>
+    </Parameters>
+    <Fetch>
+      <HttpSettings>
+        <Resource Id="HttpProps"/>
+        <RequestMethod>POST</RequestMethod>
+				<IntervalBetweenRequests RandomFrom="@(Model.Delay)" RandomTo="@(Model.Delay)" IfSame="Host"/>
+        <RequestBody>
+        <![CDATA[
+				{
+					"contents": [
+						{
+							"parts": [
+								{
+									"text": "@(Model.Content)"
+								}
+							]
+						}
+					],
+					"generationConfig": @(GetConfig()),
+					"tools": @(GetTools())
+				}
+        ]]>
+        </RequestBody>
+      </HttpSettings>
+      <Fetch.Url>
+      <![CDATA[
+        https://generativelanguage.googleapis.com/v1beta/models/@(Model.Model):generateContent
+      ]]>
+      </Fetch.Url>
+    </Fetch>
+    <Parse>
+      <JsonPath Expr="$.candidates[0].content.parts[0].text" Id="Content"/>
+    </Parse>
+    <Resource Id="Fail"/>
+  </RestConnector>
+
+  <RazorFunctions>
+    <![CDATA[
+		string GetConfig()
+		{
+			var generationConfig = new Dictionary<string, object>
+			{
+				{
+					"thinkingConfig", new Dictionary<string, object>
+					{
+						{ "thinkingLevel", Model.ThinkingLevel }
+					}
+				}
+			};
+
+			if(!string.IsNullOrEmpty(Model.TopP))
+			{
+				generationConfig["topP"] = Convert.ToDouble(Model.TopP);
+			}
+			if(!string.IsNullOrEmpty(Model.Temperature))
+			{
+				generationConfig["temperature"] = Convert.ToDouble(Model.Temperature);
+			}
+
+			return JsonConvert.SerializeObject(generationConfig);
+		}
+
+		string GetTools()
+		{
+			var tools = new List<object>();
+			if(Model.UseGoogleSearch)
+			{
+				tools.Add(new Dictionary<string, object>
+				{
+					{ "googleSearch", new Dictionary<string, object>() }
+				});
+			}
+			if(Model.UseWebContext)
+			{
+				tools.Add(new Dictionary<string, object>
+				{
+					{ "urlContext", new Dictionary<string, object>() }
+				});
+			}
+
+			return JsonConvert.SerializeObject(tools);
+		}
+    ]]>
+  </RazorFunctions>
+
+</Suite>
