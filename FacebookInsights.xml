@@ -228,48 +228,6 @@
     <Resource Id="Fail"/>
   </RestConnector>
 
-  <RestConnector Id="PagePostImpressions" Title="Page Posts Impressions" Group="Page Data">
-    <Parameters>
-      <Text Id="Id" Title="Page Id" Required="true" Debug.DefaultValue="324952857522514" Select.Connector="ListPages"/>
-      <DateInterval Id="DateInterval" Title="Interval"/>
-			<Resource Id="Aggregation"/>
-    </Parameters>
-    <Paging PageSize="30" DefaultTake="1000" EvenPages="true"/>
-		<Resource Id="Prepare"/>
-    <Fetch>
-      <Fetch.Url>
-        <![CDATA[
-				https://graph.facebook.com/v25.0/@(Model.Id)/insights/@(SelectedFields())?access_token=@(Model.PageToken)
-				@DatePagination()&period=@(Model.AggregationPeriod)
-        ]]>
-      </Fetch.Url>
-    </Fetch>
-    <Parse>
-      <JsonPath Expr="data[0].values[*]">
-        <Compute Expr="@Model.Inp.AddDays(-1)" Id="Date" Title="Date" Converter="DateTime">
-					<JsonPath Expr="end_time" Id="Inp" Converter="DateTime"/>
-        </Compute>
-			</JsonPath>
-			<JsonPath Expr="data[?(@@.name=='page_posts_impressions')].values[*]">
-        <JsonPath Expr="value" Id="i" Tag="page_posts_impressions" Title="Impressions" Converter="Int" HelpText="The number of impressions that came from all of your posts"/>
-      </JsonPath>
-      <JsonPath Expr="data[?(@@.name=='page_posts_impressions_paid')].values[*]">
-        <JsonPath Expr="value" Id="p" Tag="page_posts_impressions_paid" Title="Paid Impressions" Converter="Int" HelpText="The number of impressions of your Page posts in an Ad or Sponsored Story"/>
-      </JsonPath>
-      <JsonPath Expr="data[?(@@.name=='page_posts_impressions_organic')].values[*]">
-        <JsonPath Expr="value" Id="o" Tag="page_posts_impressions_organic" Title="Organic Impressions" Converter="Int" HelpText="The number of impressions of your posts in News Feed or Ticker or on your Page"/>
-      </JsonPath>
-      <JsonPath Expr="data[?(@@.name=='page_posts_impressions_viral')].values[*]">
-        <JsonPath Expr="value" Id="v" Title="Viral Impressions" Tag="page_posts_impressions_viral" Converter="Int" HelpText="The number of times users saw your posts via stories published by their friends"/>
-      </JsonPath>
-
-      <JsonPath Expr="data[?(@@.name=='page_posts_impressions_nonviral')].values[*]">
-        <JsonPath Expr="value" Id="nv" Tag="page_posts_impressions_nonviral" Title="Non-Viral 	Impressions" Converter="Int" HelpText="The number of times your Page's posts entered a person's screen."/>
-      </JsonPath>
-    </Parse>
-    <Resource Id="Fail"/>
-	</RestConnector>
-
   <RazorFunctions>
     <![CDATA[
       string SelectedFields() {
