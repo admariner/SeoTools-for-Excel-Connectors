@@ -341,6 +341,10 @@
         <JsonPath Expr="content.article.source" Id="ArticleSource" Title="Article Source" Converter="String" DefaultValue=""/>
         <JsonPath Expr="lifecycleState" Id="State" Title="State" Converter="String"/>
         <JsonPath Expr="author" Id="Author" Title="Author" Converter="String"/>
+
+        <JsonPath Expr="adContext.dscStatus" Id="AdStatus" Title="Ad Status" Converter="String" DefaultValue=""/>
+        <JsonPath Expr="adContext.dscName" Id="AdName" Title="Ad Name" Converter="String" DefaultValue=""/>
+        <JsonPath Expr="adContext.dscAdType" Id="AdType" Title="Ad Type" Converter="String" DefaultValue=""/>
       </JsonPath>
     </Parse>
 		<Resource Id="Fail"/>
